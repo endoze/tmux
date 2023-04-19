@@ -5,36 +5,34 @@ export LC_ALL=en_US.UTF-8
 #wrapper script for running weather on interval
 
 fahrenheit=$1
-location=$2
-fixedlocation=$3
+shift
+location=$1
+shift
+fixedlocation=$*
 
 LOCKFILE=/tmp/.dracula-tmux-weather.lock
 DATAFILE=/tmp/.dracula-tmux-data
 
-ensure_single_process()
-{
+ensure_single_process() {
   # check for another running instance of this script and terminate it if found
-  [ -f $LOCKFILE ] && ps -p "$(cat $LOCKFILE)" -o cmd= | grep -F " ${BASH_SOURCE[0]}" && kill "$(cat $LOCKFILE)"
-  echo $$ > $LOCKFILE
+  [ -f $LOCKFILE ] && ps -p "$(cat $LOCKFILE)" -o command= | grep -F " ${BASH_SOURCE[0]}" && kill "$(cat $LOCKFILE)"
+  echo $$ >$LOCKFILE
 }
 
-main()
-{
+main() {
   ensure_single_process
 
-  current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
   if [ ! -f $DATAFILE ]; then
-    printf "Loading..." > $DATAFILE
+    printf "Loading..." >$DATAFILE
   fi
 
-  $current_dir/weather.sh > $DATAFILE
+  $current_dir/weather.sh >$DATAFILE
 
-  while tmux has-session &> /dev/null
-  do
-    $current_dir/weather.sh $fahrenheit $location $fixedlocation > $DATAFILE
-    if tmux has-session &> /dev/null
-    then
+  while tmux has-session &>/dev/null; do
+    $current_dir/weather.sh $fahrenheit $location $fixedlocation >$DATAFILE
+    if tmux has-session &>/dev/null; then
       sleep 1200
     else
       break
